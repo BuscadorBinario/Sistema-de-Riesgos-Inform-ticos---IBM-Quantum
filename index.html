@@ -1,0 +1,1858 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Riesgos Informáticos - IBM Quantum</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0f0f23;
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #16213e 100%);
+        }
+
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(102, 126, 234, 0.5);
+            border-radius: 50%;
+            animation: float 20s infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100vh) translateX(50px); opacity: 0; }
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 40px 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.3) 0%, transparent 70%);
+            transform: translate(-50%, -50%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.8; }
+        }
+
+        .header h1 {
+            font-size: 3.5em;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            position: relative;
+            animation: glow 3s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { filter: drop-shadow(0 0 20px rgba(102, 126, 234, 0.5)); }
+            50% { filter: drop-shadow(0 0 40px rgba(118, 75, 162, 0.8)); }
+        }
+
+        .header p {
+            font-size: 1.2em;
+            color: #a0a0c0;
+            position: relative;
+        }
+
+        .auto-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(102, 126, 234, 0.2);
+            padding: 8px 20px;
+            border-radius: 25px;
+            margin-top: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+        }
+
+        .auto-indicator .dot {
+            width: 10px;
+            height: 10px;
+            background: #4ade80;
+            border-radius: 50%;
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; box-shadow: 0 0 10px #4ade80; }
+            50% { opacity: 0.3; }
+        }
+
+        .controls {
+            background: rgba(26, 26, 62, 0.6);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .control-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-group label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #a0a0c0;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .input-group input, .input-group select {
+            padding: 12px 15px;
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            border-radius: 10px;
+            font-size: 1em;
+            background: rgba(15, 15, 35, 0.8);
+            color: #fff;
+            transition: all 0.3s;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .btn {
+            padding: 14px 32px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.4s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            box-shadow: 0 5px 20px rgba(245, 87, 108, 0.4);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(245, 87, 108, 0.6);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 5px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            box-shadow: 0 5px 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(26, 26, 62, 0.6);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+            transform: rotate(45deg);
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            border-color: rgba(102, 126, 234, 0.5);
+            box-shadow: 0 15px 50px rgba(102, 126, 234, 0.4);
+        }
+
+        .stat-card h3 {
+            font-size: 0.85em;
+            color: #a0a0c0;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 600;
+        }
+
+        .stat-card .value {
+            font-size: 3em;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .subtitle {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .visualization-container {
+            background: rgba(26, 26, 62, 0.6);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .visualization-container h2 {
+            color: #fff;
+            margin-bottom: 25px;
+            font-size: 1.8em;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .visualization-container h2::before {
+            content: '';
+            width: 5px;
+            height: 35px;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .chart-container {
+            background: rgba(15, 15, 35, 0.8);
+            border-radius: 15px;
+            padding: 15px;
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            height: 300px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .chart-container canvas {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .recommendations {
+            background: rgba(16, 185, 129, 0.2);
+            border: 2px solid #10b981;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .recommendations h3 {
+            color: #10b981;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .recommendation-item {
+            background: rgba(15, 15, 35, 0.8);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border-left: 4px solid #10b981;
+        }
+
+        .risk-matrix {
+            display: grid;
+            grid-template-columns: 100px repeat(5, 1fr);
+            grid-template-rows: 50px repeat(5, 1fr);
+            gap: 8px;
+            max-width: 900px;
+            margin: 0 auto;
+            min-height: 600px;
+        }
+
+        .matrix-cell, .matrix-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.4s;
+            position: relative;
+        }
+
+        .matrix-label {
+            background: rgba(15, 15, 35, 0.8);
+            color: #a0a0c0;
+            font-size: 0.95em;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .matrix-risk {
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid transparent;
+        }
+
+        .matrix-risk::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s;
+        }
+
+        .matrix-risk:hover::before {
+            transform: translateX(100%);
+        }
+
+        .matrix-risk:hover {
+            transform: scale(1.08);
+            z-index: 10;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .risk-count {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #0f0f23;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9em;
+            font-weight: 800;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            animation: pop 0.5s ease-out;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .risk-low { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
+        .risk-medium { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; }
+        .risk-high { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: white; }
+        .risk-critical { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; }
+
+        .heatmap-avanzado {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+        }
+
+        .heatmap-card {
+            background: rgba(15, 15, 35, 0.9);
+            border-radius: 20px;
+            padding: 25px;
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            min-height: 220px;
+        }
+
+        .heatmap-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.15), transparent);
+            transition: left 0.8s;
+            z-index: 1;
+        }
+
+        .heatmap-card:hover::before {
+            left: 100%;
+        }
+
+        .heatmap-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            border-color: rgba(102, 126, 234, 0.7);
+            box-shadow: 0 20px 60px rgba(102, 126, 234, 0.4);
+        }
+
+        .heatmap-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .heatmap-title {
+            font-size: 1.1em;
+            font-weight: 700;
+            color: #a0a0c0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .heatmap-score {
+            font-size: 2.2em;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .heatmap-bar-container {
+            position: relative;
+            height: 12px;
+            background: rgba(102, 126, 234, 0.2);
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 15px 0;
+            z-index: 2;
+        }
+
+        .heatmap-bar {
+            height: 100%;
+            border-radius: 12px;
+            position: relative;
+            transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 15px currentColor;
+        }
+
+        .heatmap-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .heatmap-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+            z-index: 2;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 8px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 10px;
+            font-size: 0.8em;
+        }
+
+        .stat-number {
+            font-weight: 700;
+            color: #fff;
+            display: block;
+            font-size: 1.2em;
+        }
+
+        .stat-label {
+            color: #a0a0c0;
+            font-size: 0.75em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(26, 26, 62, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 900px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            border: 2px solid rgba(102, 126, 234, 0.5);
+            animation: modalSlide 0.3s ease;
+        }
+
+        @keyframes modalSlide {
+            from { opacity: 0; transform: translate(-50%, -60%); }
+            to { opacity: 1; transform: translate(-50%, -50%); }
+        }
+
+        .risk-detail {
+            background: rgba(15, 15, 35, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .risk-name {
+            font-weight: 700;
+            font-size: 1.1em;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+
+        .risk-solution {
+            background: rgba(16, 185, 129, 0.2);
+            padding: 12px;
+            border-radius: 10px;
+            margin-top: 10px;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 2em;
+            cursor: pointer;
+            color: #a0a0c0;
+            transition: color 0.3s;
+        }
+
+        .close-modal:hover {
+            color: #fff;
+        }
+
+        .risks-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 10px;
+        }
+
+        .risks-table thead tr {
+            background: rgba(102, 126, 234, 0.2);
+        }
+
+        .risks-table th {
+            padding: 18px 20px;
+            text-align: left;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 1px;
+            color: #a0a0c0;
+            border: none;
+        }
+
+        .risks-table tbody tr {
+            background: rgba(15, 15, 35, 0.6);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .risks-table tbody tr:hover {
+            background: rgba(102, 126, 234, 0.2);
+            transform: scale(1.01);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .risk-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-bajo { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
+        .badge-medio { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; }
+        .badge-alto { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: white; }
+        .badge-critico { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; }
+
+        .delete-btn {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            font-size: 0.8em;
+        }
+
+        .alert-critical {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(239,68,68,0.5);
+            z-index: 1000;
+            color: white;
+            font-weight: 700;
+            animation: slideIn 0.5s ease;
+            cursor: pointer;
+            max-width: 300px;
+        }
+
+        .alert-success {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(16,185,129,0.5);
+            z-index: 1000;
+            color: white;
+            font-weight: 700;
+            animation: slideIn 0.5s ease;
+            cursor: pointer;
+            max-width: 300px;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.8em;
+            z-index: 100;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .matrix-risk:hover .tooltip {
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 { font-size: 2em; }
+            .control-group { grid-template-columns: 1fr; }
+            .risk-matrix { font-size: 0.7em; grid-template-columns: 60px repeat(5, 1fr); min-height: 400px; }
+            .heatmap-avanzado { grid-template-columns: 1fr; }
+            .charts-grid { grid-template-columns: 1fr; }
+            .chart-container { height: 250px; }
+            .btn-group { justify-content: center; flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="animated-bg"></div>
+    <div class="particles" id="particles"></div>
+
+    <div class="container">
+        <div class="header">
+            <h1>🔐 MATRIZ DE RIESGOS INFORMÁTICOS</h1>
+            <p>Caso Práctico: Problemática de Riesgos Informáticos - Sector: Tecnologías Cuánticas - Empresa IBM Corporation - Fecha: 14 Octubre 2025</p>
+            <div class="auto-indicator">
+                <span class="dot"></span>
+                <span>Generación Automática Activa</span>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <div class="input-group">
+                    <label>🎯 Nombre del Riesgo</label>
+                    <input type="text" id="riskName" placeholder="Ej: Cosecha Ahora">
+                </div>
+                <div class="input-group">
+                    <label>📂 Categoría</label>
+                    <select id="category">
+                        <option value="Criptografía">Criptografía</option>
+                        <option value="Hardware Cuántico">Hardware Cuántico</option>
+                        <option value="Software">Software</option>
+                        <option value="Comunicaciones">Comunicaciones</option>
+                        <option value="Protección de Datos">Protección de Datos</option>
+                        <option value="Infraestructura">Infraestructura</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>📊 Probabilidad (1-5)</label>
+                    <input type="number" id="probability" min="1" max="5" value="3">
+                </div>
+                <div class="input-group">
+                    <label>⚡ Impacto (1-5)</label>
+                    <input type="number" id="impact" min="1" max="5" value="3">
+                </div>
+                <div class="input-group">
+                    <label>⏱️ Velocidad Auto (seg)</label>
+                    <input type="number" id="autoSpeed" min="1" max="10" value="3">
+                </div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="addRisk()">➕ Agregar Riesgo</button>
+                <button class="btn btn-secondary" onclick="toggleAutoGeneration()">
+                    <span id="autoBtn">⏸️ Pausar Auto</span>
+                </button>
+                <button class="btn btn-success" onclick="generateReport()">📊 Generar Reporte</button>
+                <button class="btn btn-secondary" onclick="clearData()">🗑️ Limpiar Todo</button>
+                <button class="btn btn-danger" onclick="simulateAttack()">💥 Simular Ataque</button>
+                <button class="btn btn-primary" onclick="exportToPDF()">📄 PDF Profesional</button>
+                <button class="btn btn-success" onclick="applyAllSolutions()">✅ Aplicar Todas</button>
+            </div>
+        </div>
+
+        <div class="dashboard" id="dashboard"></div>
+
+        <div class="recommendations" id="recommendations"></div>
+        
+        <div class="visualization-container">
+            <h2>🗺️ Matriz de Riesgos Interactiva</h2>
+            <div class="risk-matrix" id="riskMatrix"></div>
+        </div>
+
+        <div class="visualization-container">
+            <h2>🌡️ Mapa de Calor Dinámico Avanzado</h2>
+            <div class="heatmap-avanzado" id="heatmap"></div>
+        </div>
+
+        <div class="visualization-container">
+            <h2>📈 Panel de Gráficos de Riesgos</h2>
+            <div class="charts-grid" id="chartsGrid">
+                <div class="chart-container"><canvas id="chart1"></canvas></div>
+                <div class="chart-container"><canvas id="chart2"></canvas></div>
+                <div class="chart-container"><canvas id="chart3"></canvas></div>
+                <div class="chart-container"><canvas id="chart4"></canvas></div>
+                <div class="chart-container"><canvas id="chart5"></canvas></div>
+                <div class="chart-container"><canvas id="chart6"></canvas></div>
+                <div class="chart-container"><canvas id="chart7"></canvas></div>
+                <div class="chart-container"><canvas id="chart8"></canvas></div>
+                <div class="chart-container"><canvas id="chart9"></canvas></div>
+            </div>
+        </div>
+
+        <div class="visualization-container">
+            <h2>📋 Registro Completo de Riesgos</h2>
+            <table class="risks-table">
+                <thead>
+                    <tr>
+                        <th>Riesgo</th>
+                        <th>Categoría</th>
+                        <th>Probabilidad</th>
+                        <th>Impacto</th>
+                        <th>Nivel</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="risksTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="riskModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <h3 id="modalTitle">Detalles de Riesgos</h3>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        let risks = [];
+        let autoGeneration = true;
+        let autoInterval;
+        let attackSimulation = false;
+        let charts = {};
+
+        const riskDatabase = [
+            { name: "Cosecha Ahora", category: "Criptografía", probability: 3, impact: 5, solution: "Implementar crypto-agilidad y migrar a PQC inmediatamente. Doble encriptación híbrida.", priority: "CRÍTICO" },
+            { name: "Ruptura RSA por Shor", category: "Criptografía", probability: 4, impact: 5, solution: "Adoptar algoritmos post-cuánticos como Kyber y Dilithium NIST.", priority: "CRÍTICO" },
+            { name: "Decoherencia de Qubits", category: "Hardware Cuántico", probability: 5, impact: 5, solution: "Refrigeración criogénica + códigos superficie nivel 2.", priority: "CRÍTICO" },
+            { name: "Ruido EMI", category: "Hardware Cuántico", probability: 2, impact: 4, solution: "Blindaje Faraday + IA predictiva EMI.", priority: "ALTO" },
+            { name: "Error CNOT", category: "Hardware Cuántico", probability: 3, impact: 4, solution: "Calibración dinámica + códigos Steane.", priority: "ALTO" },
+            { name: "Fuga de Bell", category: "Protección de Datos", probability: 4, impact: 4, solution: "Encriptación homomórfica + fragmentación qubits.", priority: "ALTO" },
+            { name: "Ruptura ECDH", category: "Criptografía", probability: 4, impact: 4, solution: "NTRU Prime + rotación curvas.", priority: "ALTO" },
+            { name: "Vulnerabilidad DSA", category: "Criptografía", probability: 2, impact: 3, solution: "FALCON/SPHINCS+. Rotación claves 90 días.", priority: "MEDIO" },
+            { name: "Corrupción GHZ", category: "Software", probability: 3, impact: 3, solution: "Verificación multipartita + códigos CSS.", priority: "MEDIO" },
+            { name: "PNS QKD", category: "Comunicaciones", probability: 4, impact: 3, solution: "BB84 decoy states + Device-Independent QKD.", priority: "MEDIO" },
+            { name: "Man-in-the-middle cuántico", category: "Comunicaciones", probability: 3, impact: 4, solution: "Autenticación entrelazamiento + E91.", priority: "ALTO" },
+            { name: "Factorización RSA-4096", category: "Criptografía", probability: 3, impact: 5, solution: "CRYSTALS-Kyber + auditoría X.509.", priority: "CRÍTICO" },
+            { name: "Colapso de superposición", category: "Software", probability: 4, impact: 4, solution: "Qiskit simulador + testing registradores.", priority: "MEDIO" },
+            { name: "Fallo criogénico dilution", category: "Infraestructura", probability: 3, impact: 5, solution: "Refrigeradores redundantes + IoT 24/7.", priority: "CRÍTICO" },
+            { name: "Error código superficie", category: "Software", probability: 4, impact: 4, solution: "Código Bacon-Shor + verificación auto.", priority: "MEDIO" },
+            { name: "Puerta trasera Grover", category: "Software", probability: 2, impact: 5, solution: "Análisis Q# + encriptación parámetros.", priority: "ALTO" },
+            { name: "Radiación cósmica chip", category: "Infraestructura", probability: 3, impact: 3, solution: "Blindaje plomo-boro + topología toroidal.", priority: "BAJO" },
+            { name: "Clonación cuántica ilegal", category: "Protección de Datos", probability: 2, impact: 5, solution: "No-Cloning enforcement + watermarking.", priority: "CRÍTICO" },
+            { name: "Ataque canal lateral DPA", category: "Hardware Cuántico", probability: 4, impact: 4, solution: "Randomización timing + shielding potencia.", priority: "ALTO" },
+            { name: "Entrelazamiento comprometido", category: "Comunicaciones", probability: 3, impact: 5, solution: "MDI-QKD + Bell inequalities real-time.", priority: "CRÍTICO" },
+            { name: "Pérdida coherencia T1/T2", category: "Hardware Cuántico", probability: 5, impact: 3, solution: "Materiales isotópicos + pulsos π/2.", priority: "MEDIO" },
+            { name: "Sabotaje físico qubits", category: "Infraestructura", probability: 2, impact: 5, solution: "Biométrica nivel 3 + cámaras térmicas.", priority: "CRÍTICO" },
+            { name: "Algoritmo VQE malicioso", category: "Software", probability: 3, impact: 4, solution: "Validación Hamiltonianos + sandboxing.", priority: "ALTO" },
+            { name: "Fuga teletransporte", category: "Protección de Datos", probability: 2, impact: 5, solution: "Encriptación canales + fidelidad post.", priority: "CRÍTICO" },
+            { name: "Ataque timing QKD", category: "Comunicaciones", probability: 4, impact: 4, solution: "Randomización ventanas + decoy timing.", priority: "ALTO" },
+            { name: "Vulnerabilidad QAOA", category: "Software", probability: 3, impact: 3, solution: "Parámetros aleatorios + mixing validación.", priority: "BAJO" }
+        ];
+
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 40; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.width = Math.random() * 4 + 2 + 'px';
+                particle.style.height = particle.style.width;
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 20 + 's';
+                particle.style.animationDuration = Math.random() * 20 + 20 + 's';
+                container.appendChild(particle);
+            }
+        }
+
+        function calculateRiskLevel(probability, impact) {
+            const score = probability * impact;
+            if (score <= 6) return { level: "Bajo", class: "badge-bajo" };
+            if (score <= 12) return { level: "Medio", class: "badge-medio" };
+            if (score <= 20) return { level: "Alto", class: "badge-alto" };
+            return { level: "Crítico", class: "badge-critico" };
+        }
+
+        function addRisk() {
+            const name = document.getElementById('riskName').value.trim();
+            const category = document.getElementById('category').value;
+            const probability = parseInt(document.getElementById('probability').value);
+            const impact = parseInt(document.getElementById('impact').value);
+
+            if (!name) {
+                alert('Por favor ingresa el nombre del riesgo');
+                return;
+            }
+
+            const dbRisk = riskDatabase.find(r => r.name === name);
+            risks.push({ 
+                name, category, probability, impact,
+                solution: dbRisk ? dbRisk.solution : "Mitigación estándar",
+                priority: dbRisk ? dbRisk.priority : "MEDIO",
+                status: "Pendiente",
+                timestamp: new Date()
+            });
+            
+            document.getElementById('riskName').value = '';
+            updateVisualizations();
+        }
+
+        function autoGenerateRisk() {
+            if (!autoGeneration || risks.length >= 247) return;
+            
+            const randomRisk = riskDatabase[Math.floor(Math.random() * riskDatabase.length)];
+            const variation = Math.floor(Math.random() * 3) - 1;
+            
+            risks.push({
+                name: randomRisk.name,
+                category: randomRisk.category,
+                probability: Math.max(1, Math.min(5, randomRisk.probability + variation)),
+                impact: Math.max(1, Math.min(5, randomRisk.impact + variation)),
+                solution: randomRisk.solution,
+                priority: randomRisk.priority,
+                status: Math.random() > 0.7 ? "Mitigado" : "Pendiente",
+                timestamp: new Date()
+            });
+            
+            updateVisualizations();
+        }
+
+        function toggleAutoGeneration() {
+            autoGeneration = !autoGeneration;
+            const btn = document.getElementById('autoBtn');
+            const speed = document.getElementById('autoSpeed').value * 1000;
+            
+            if (autoGeneration) {
+                btn.innerHTML = '⏸️ Pausar Auto';
+                startAutoGeneration(speed);
+            } else {
+                btn.innerHTML = '▶️ Reanudar Auto';
+                if (autoInterval) clearInterval(autoInterval);
+            }
+        }
+
+        function startAutoGeneration(speed) {
+            if (autoInterval) clearInterval(autoInterval);
+            autoInterval = setInterval(autoGenerateRisk, speed);
+        }
+
+        function clearData() {
+            if (confirm('¿Eliminar todos los riesgos?')) {
+                risks = [];
+                updateVisualizations();
+            }
+        }
+
+        function simulateAttack() {
+            attackSimulation = true;
+            const criticalRisks = risks.filter(r => calculateRiskLevel(r.probability, r.impact).level === "Crítico");
+            
+            if (criticalRisks.length === 0) {
+                alert('No hay riesgos críticos para simular');
+                return;
+            }
+            
+            const attacked = criticalRisks[Math.floor(Math.random() * criticalRisks.length)];
+            attacked.status = "ATACADO";
+            attacked.impact = Math.min(5, attacked.impact + 1);
+            
+            const alert = document.createElement('div');
+            alert.className = 'alert-critical';
+            alert.innerHTML = `🚨 ATAQUE SIMULADO<br><strong>${attacked.name}</strong><br>Impacto: ${attacked.impact}`;
+            alert.onclick = () => alert.remove();
+            document.body.appendChild(alert);
+            
+            setTimeout(() => updateVisualizations(), 2000);
+        }
+
+        function applyAllSolutions() {
+            const pending = risks.filter(r => r.status === "Pendiente");
+            if (pending.length === 0) {
+                alert('¡Todas las soluciones ya están aplicadas!');
+                return;
+            }
+            
+            pending.forEach(risk => risk.status = "Mitigado");
+            const alert = document.createElement('div');
+            alert.className = 'alert-success';
+            alert.innerHTML = `✅ ${pending.length} soluciones aplicadas automáticamente`;
+            alert.onclick = () => alert.remove();
+            document.body.appendChild(alert);
+            setTimeout(() => alert.remove(), 3000);
+            updateVisualizations();
+        }
+
+        function generateReport() {
+            let report = `📊 REPORTE EJECUTIVO - IBM QUANTUM - ${new Date().toLocaleDateString('es-ES')}\n\n`;
+            report += `Total Riesgos: ${risks.length}\n`;
+            report += `Críticos: ${risks.filter(r => calculateRiskLevel(r.probability, r.impact).level === "Crítico").length}\n`;
+            report += `Mitigados: ${risks.filter(r => r.status === "Mitigado").length}\n\n`;
+            report += `🔥 TOP 5 RIESGOS CRÍTICOS:\n`;
+            
+            const criticals = risks.filter(r => calculateRiskLevel(r.probability, r.impact).level === "Crítico")
+                .sort((a,b) => (b.probability * b.impact) - (a.probability * a.impact))
+                .slice(0,5);
+            
+            criticals.forEach((r, i) => {
+                report += `${i+1}. ${r.name} (${r.status})\n   Solución: ${r.solution}\n\n`;
+            });
+            
+            const reportDiv = document.createElement('div');
+            reportDiv.style.cssText = 'position:fixed;top:20px;left:20px;background:rgba(16,185,129,0.95);padding:20px;border-radius:15px;max-width:400px;z-index:1000;font-size:0.9em;line-height:1.4;';
+            reportDiv.innerHTML = report.replace(/\n/g, '<br>');
+            reportDiv.onclick = () => reportDiv.remove();
+            document.body.appendChild(reportDiv);
+        }
+
+        function updateRecommendations() {
+            const criticalPending = risks.filter(r => 
+                calculateRiskLevel(r.probability, r.impact).level === "Crítico" && 
+                r.status === "Pendiente"
+            );
+            
+            let html = `<h3>🚀 RECOMENDACIONES PRIORITARIAS (${criticalPending.length})</h3>`;
+            
+            criticalPending.slice(0,5).forEach(risk => {
+                html += `
+                    <div class="recommendation-item">
+                        <strong>${risk.name}</strong> 
+                        <span style="float:right;color:#10b981;">${risk.priority}</span><br>
+                        <small>${risk.solution}</small>
+                        <button class="btn btn-success" style="float:right;margin-top:5px;padding:4px 8px;font-size:0.7em;" 
+                                onclick="applySolution(${risks.indexOf(risk)})">✅ Aplicar</button>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('recommendations').innerHTML = html || 
+                '<h3 style="color:#10b981;">✅ ¡SISTEMA SEGURO! No hay riesgos críticos pendientes</h3>';
+        }
+
+        function applySolution(index) {
+            if (risks[index].status === "Mitigado") {
+                alert('Este riesgo ya ha sido mitigado');
+                return;
+            }
+            risks[index].status = "Mitigado";
+            const alert = document.createElement('div');
+            alert.className = 'alert-success';
+            alert.innerHTML = `✅ Riesgo "${risks[index].name}" mitigado exitosamente`;
+            alert.onclick = () => alert.remove();
+            document.body.appendChild(alert);
+            setTimeout(() => alert.remove(), 3000);
+            updateVisualizations();
+        }
+
+        function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.setFontSize(20);
+            doc.text('Informe Ejecutivo - Riesgos Informáticos IBM Quantum', 20, 20);
+            
+            doc.autoTable({
+                startY: 40,
+                head: [['Riesgo', 'Categoría', 'Prob.', 'Impacto', 'Nivel', 'Estado', 'Prioridad']],
+                body: risks.map(risk => {
+                    const level = calculateRiskLevel(risk.probability, r.impact).level;
+                    return [risk.name, risk.category, risk.probability, risk.impact, level, risk.status, risk.priority];
+                }),
+                theme: 'grid',
+                headStyles: { fillColor: [102, 126, 234] },
+                styles: { fontSize: 7, cellPadding: 3 }
+            });
+            
+            doc.save(`riesgos-ibm-quantum-${new Date().toISOString().split('T')[0]}.pdf`);
+        }
+
+        function updateDashboard() {
+            const total = risks.length;
+            const critical = risks.filter(r => calculateRiskLevel(r.probability, r.impact).level === "Crítico").length;
+            const high = risks.filter(r => calculateRiskLevel(r.probability, r.impact).level === "Alto").length;
+            const mitigated = risks.filter(r => r.status === "Mitigado").length;
+            const avgRisk = total > 0 ? (risks.reduce((sum, r) => sum + (r.probability * r.impact), 0) / total).toFixed(1) : 0;
+
+            document.getElementById('dashboard').innerHTML = `
+                <div class="stat-card">
+                    <h3>Total Riesgos</h3>
+                    <div class="value">${total}</div>
+                    <div class="subtitle">Identificados</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Críticos</h3>
+                    <div class="value" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${critical}</div>
+                    <div class="subtitle">Urgentes</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Mitigados</h3>
+                    <div class="value" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${mitigated}</div>
+                    <div class="subtitle">Solucionados</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Seguridad</h3>
+                    <div class="value" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${((mitigated/total)*100).toFixed(0)}%</div>
+                    <div class="subtitle">Cobertura</div>
+                </div>
+            `;
+
+            if (critical > 3 && !attackSimulation) {
+                let alert = document.querySelector('.alert-critical');
+                if (!alert) {
+                    alert = document.createElement('div');
+                    alert.className = 'alert-critical';
+                    alert.innerHTML = `🚨 ${critical} RIESGOS CRÍTICOS<br><button class="btn btn-success" onclick="applyAllSolutions()" style="margin-top:5px;">Mitigar Todos</button>`;
+                    alert.onclick = (e) => { if (e.target.tagName !== 'BUTTON') alert.remove(); };
+                    document.body.appendChild(alert);
+                }
+            }
+        }
+
+        function updateRiskMatrix() {
+            const matrix = document.getElementById('riskMatrix');
+            let html = '';
+
+            html += '<div class="matrix-cell matrix-label"></div>';
+            for (let i = 1; i <= 5; i++) {
+                html += `<div class="matrix-cell matrix-label">Prob ${i}</div>`;
+            }
+
+            for (let impact = 5; impact >= 1; impact--) {
+                html += `<div class="matrix-cell matrix-label">Impact ${impact}</div>`;
+                
+                for (let prob = 1; prob <= 5; prob++) {
+                    const cellRisks = risks.filter(r => r.probability === prob && r.impact === impact);
+                    const count = cellRisks.length;
+                    const score = prob * impact;
+                    let riskClass = 'risk-low';
+                    
+                    if (score <= 6) riskClass = 'risk-low';
+                    else if (score <= 12) riskClass = 'risk-medium';
+                    else if (score <= 20) riskClass = 'risk-high';
+                    else riskClass = 'risk-critical';
+
+                    const tooltipText = cellRisks.map(r => `${r.name} (${r.status})`).join('\n');
+
+                    html += `
+                        <div class="matrix-cell matrix-risk ${riskClass}" 
+                             onclick="showRiskDetails(${prob}, ${impact})"
+                             onmouseover="showTooltip(event, '${tooltipText.replace(/'/g, "\\'")}')"
+                             onmouseout="hideTooltip()">
+                            ${count > 0 ? `<span class="risk-count">${count}</span>` : ''}
+                            <div style="font-size: 0.8em; opacity: 0.7;">${score}</div>
+                        </div>
+                    `;
+                }
+            }
+
+            matrix.innerHTML = html;
+        }
+
+        function showTooltip(event, text) {
+            let tooltip = document.querySelector('.tooltip');
+            if (!tooltip) {
+                tooltip = document.createElement('div');
+                tooltip.className = 'tooltip';
+                document.body.appendChild(tooltip);
+            }
+            tooltip.innerHTML = text;
+            tooltip.style.left = event.pageX + 10 + 'px';
+            tooltip.style.top = event.pageY - 10 + 'px';
+        }
+
+        function hideTooltip() {
+            const tooltip = document.querySelector('.tooltip');
+            if (tooltip) tooltip.remove();
+        }
+
+        function showRiskDetails(prob, impact) {
+            const cellRisks = risks.filter(r => r.probability === prob && r.impact === impact);
+            if (cellRisks.length === 0) return;
+
+            document.getElementById('modalTitle').textContent = `Riesgos: Prob ${prob} × Impact ${impact}`;
+            let html = `<p style="color: #a0a0c0;">${cellRisks.length} riesgos encontrados</p>`;
+            
+            cellRisks.forEach(risk => {
+                const level = calculateRiskLevel(risk.probability, risk.impact);
+                html += `
+                    <div class="risk-detail">
+                        <div class="risk-name">${risk.name}</div>
+                        <div style="color: #a0a0c0; font-size: 0.9em;">
+                            ${risk.category} | ${risk.status} | ${risk.priority}
+                        </div>
+                        <span class="risk-badge ${level.class}">${level.level}</span>
+                        <div class="risk-solution">
+                            <strong>✅ Solución:</strong> ${risk.solution}
+                        </div>
+                        <button class="btn btn-success" style="margin-top: 8px;" 
+                                onclick="applySolution(${risks.indexOf(risk)})">Aplicar Solución</button>
+                    </div>
+                `;
+            });
+            document.getElementById('modalBody').innerHTML = html;
+            document.getElementById('riskModal').style.display = 'block';
+        }
+
+        function showCategoryDetails(category) {
+            const catRisks = risks.filter(r => r.category === category);
+            document.getElementById('modalTitle').textContent = `Categoría: ${category}`;
+            let html = `<p style="color: #a0a0c0;">${catRisks.length} riesgos</p>`;
+            
+            catRisks.forEach(risk => {
+                const level = calculateRiskLevel(risk.probability, risk.impact);
+                html += `
+                    <div class="risk-detail">
+                        <div class="risk-name">${risk.name}</div>
+                        <span class="risk-badge ${level.class}">${level.level}</span>
+                        <div class="risk-solution">
+                            <strong>✅ ${risk.solution}</strong>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('modalBody').innerHTML = html;
+            document.getElementById('riskModal').style.display = 'block';
+        }
+
+        function updateHeatmap() {
+            const categories = {};
+            risks.forEach(risk => {
+                if (!categories[risk.category]) {
+                    categories[risk.category] = { total: 0, count: 0, critical: 0, high: 0, risks: [] };
+                }
+                const score = risk.probability * risk.impact;
+                categories[risk.category].total += score;
+                categories[risk.category].count++;
+                categories[risk.category].risks.push(risk);
+                
+                if (score > 20) categories[risk.category].critical++;
+                else if (score > 12) categories[risk.category].high++;
+            });
+
+            let html = '';
+            const sortedCategories = Object.entries(categories).sort((a, b) => 
+                (b[1].total / b[1].count) - (a[1].total / a[1].count)
+            );
+
+            for (const [cat, data] of sortedCategories) {
+                const avg = data.total / data.count;
+                let color = '#10b981';
+                if (avg > 18) color = '#ef4444';
+                else if (avg > 15) color = '#f97316';
+                else if (avg > 12) color = '#f59e0b';
+                else if (avg > 8) color = '#eab308';
+
+                const percentage = (avg / 25) * 100;
+
+                html += `
+                    <div class="heatmap-card" onclick="showCategoryDetails('${cat}')">
+                        <div class="heatmap-header">
+                            <div class="heatmap-title">${cat}</div>
+                            <div class="heatmap-score">${avg.toFixed(1)}</div>
+                        </div>
+                        <div class="heatmap-bar-container">
+                            <div class="heatmap-bar" style="background: ${color}; width: ${percentage}%"></div>
+                        </div>
+                        <div class="heatmap-stats">
+                            <div class="stat-item"><span class="stat-number">${data.count}</span><span class="stat-label">Total</span></div>
+                            <div class="stat-item"><span class="stat-number">${data.critical}</span><span class="stat-label">Críticos</span></div>
+                            <div class="stat-item"><span class="stat-number">${data.high}</span><span class="stat-label">Altos</span></div>
+                            <div class="stat-item"><span class="stat-number">${((data.critical/data.count)*100).toFixed(0)}%</span><span class="stat-label">Riesgo</span></div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            document.getElementById('heatmap').innerHTML = html || 
+                '<p style="color: #666; text-align: center; padding: 40px;">Esperando datos...</p>';
+        }
+
+        function updateRisksTable() {
+            const tbody = document.getElementById('risksTableBody');
+            if (risks.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #666; padding: 40px;">Generación automática activa...</td></tr>';
+                return;
+            }
+
+            const sortedRisks = [...risks].sort((a, b) => 
+                (b.probability * b.impact) - (a.probability * a.impact)
+            );
+
+            let html = '';
+            sortedRisks.forEach((risk, index) => {
+                const riskLevel = calculateRiskLevel(risk.probability, risk.impact);
+                const originalIndex = risks.indexOf(risk);
+                const statusColor = risk.status === "Mitigado" ? "#10b981" : risk.status === "ATACADO" ? "#ef4444" : "#f59e0b";
+                
+                html += `
+                    <tr onclick="showRiskDetails(${risk.probability}, ${risk.impact})">
+                        <td><strong>${risk.name}</strong></td>
+                        <td>${risk.category}</td>
+                        <td>
+                            <div style="display: flex; gap: 3px;">
+                                ${Array(5).fill(0).map((_, i) => 
+                                    `<div style="width: 12px; height: 12px; background: ${i < risk.probability ? '#667eea' : '#333'}; border-radius: 2px;"></div>`
+                                ).join('')}
+                            </div>
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 3px;">
+                                ${Array(5).fill(0).map((_, i) => 
+                                    `<div style="width: 12px; height: 12px; background: ${i < risk.impact ? '#f5576c' : '#333'}; border-radius: 2px;"></div>`
+                                ).join('')}
+                            </div>
+                        </td>
+                        <td><span class="risk-badge ${riskLevel.class}">${riskLevel.level}</span></td>
+                        <td><span style="color: ${statusColor}; font-weight: bold;">${risk.status}</span></td>
+                        <td>
+                            <button onclick="event.stopPropagation(); deleteRisk(${originalIndex})" class="delete-btn" style="padding: 4px 8px;">🗑️</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function getRisksByCategory() {
+            const categories = {};
+            risks.forEach(risk => {
+                categories[risk.category] = (categories[risk.category] || 0) + 1;
+            });
+            return categories;
+        }
+
+        function getRisksBySeverity() {
+            const severity = { Bajo: 0, Medio: 0, Alto: 0, Crítico: 0 };
+            risks.forEach(risk => {
+                const level = calculateRiskLevel(risk.probability, risk.impact).level;
+                severity[level]++;
+            });
+            return severity;
+        }
+
+        function getRisksByStatus() {
+            const status = { Pendiente: 0, Mitigado: 0, Atacado: 0 };
+            risks.forEach(risk => {
+                const stat = risk.status === "ATACADO" ? "Atacado" : risk.status;
+                status[stat]++;
+            });
+            return status;
+        }
+
+        function getRisksByPriority() {
+            const priority = { BAJO: 0, MEDIO: 0, ALTO: 0, CRÍTICO: 0 };
+            risks.forEach(risk => {
+                priority[risk.priority]++;
+            });
+            return priority;
+        }
+
+        function getRiskScores() {
+            return risks.map(risk => risk.probability * risk.impact);
+        }
+
+        function getRisksByProbability() {
+            const probs = Array(5).fill(0);
+            risks.forEach(risk => {
+                probs[risk.probability - 1]++;
+            });
+            return probs;
+        }
+
+        function getRisksByImpact() {
+            const impacts = Array(5).fill(0);
+            risks.forEach(risk => {
+                impacts[risk.impact - 1]++;
+            });
+            return impacts;
+        }
+
+        function getAverageRiskByCategory() {
+            const categories = {};
+            risks.forEach(risk => {
+                if (!categories[risk.category]) {
+                    categories[risk.category] = { total: 0, count: 0 };
+                }
+                categories[risk.category].total += risk.probability * risk.impact;
+                categories[risk.category].count++;
+            });
+            const averages = {};
+            for (const cat in categories) {
+                averages[cat] = categories[cat].total / categories[cat].count;
+            }
+            return averages;
+        }
+
+        function getCriticalRisksByCategory() {
+            const categories = {};
+            risks.forEach(risk => {
+                if (!categories[risk.category]) {
+                    categories[risk.category] = 0;
+                }
+                if (calculateRiskLevel(risk.probability, risk.impact).level === "Crítico") {
+                    categories[risk.category]++;
+                }
+            });
+            return categories;
+        }
+
+        function updateCharts() {
+            const colors = ['#10b981', '#f59e0b', '#f97316', '#ef4444', '#667eea', '#764ba2'];
+            
+            // Destroy existing charts if they exist
+            ['chart1', 'chart2', 'chart3', 'chart4', 'chart5', 'chart6', 'chart7', 'chart8', 'chart9'].forEach(id => {
+                const ctx = document.getElementById(id);
+                if (ctx && Chart.getChart(ctx)) {
+                    Chart.getChart(ctx).destroy();
+                }
+            });
+
+            // Chart 1: Riesgos por Categoría (Bar)
+            new Chart(document.getElementById('chart1'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(getRisksByCategory()),
+                    datasets: [{
+                        label: 'Número de Riesgos',
+                        data: Object.values(getRisksByCategory()),
+                        backgroundColor: colors,
+                        borderColor: colors.map(c => c.replace('0.8', '1')),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    plugins: {
+                        title: { display: true, text: 'Riesgos por Categoría', color: '#fff' },
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#a0a0c0' } },
+                        y: { ticks: { color: '#a0a0c0' }, beginAtZero: true }
+                    }
+                }
+            });
+
+            // Chart 2: Distribución por Severidad (Pie)
+            new Chart(document.getElementById('chart2'), {
+                type: 'pie',
+                data: {
+                    labels: ['Bajo', 'Medio', 'Alto', 'Crítico'],
+                    datasets: [{
+                        data: Object.values(getRisksBySeverity()),
+                        backgroundColor: ['#10b981', '#f59e0b', '#f97316', '#ef4444'],
+                        borderColor: ['#059669', '#d97706', '#ea580c', '#dc2626'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    plugins: {
+                        title: { display: true, text: 'Distribución por Severidad', color: '#fff' },
+                        legend: { labels: { color: '#a0a0c0' } }
+                    }
+                }
+            });
+
+            // Chart 3: Estado de Riesgos (Doughnut)
+            new Chart(document.getElementById('chart3'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Pendiente', 'Mitigado', 'Atacado'],
+                    datasets: [{
+                        data: Object.values(getRisksByStatus()),
+                        backgroundColor: ['#f59e0b', '#10b981', '#ef4444'],
+                        borderColor: ['#d97706', '#059669', '#dc2626'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    plugins: {
+                        title: { display: true, text: 'Estado de Riesgos', color: '#fff' },
+                        legend: { labels: { color: '#a0a0c0' } }
+                    }
+                }
+            });
+
+            // Chart 4: Riesgos por Prioridad (Bar)
+            new Chart(document.getElementById('chart4'), {
+                type: 'bar',
+                data: {
+                    labels: ['Bajo', 'Medio', 'Alto', 'Crítico'],
+                    datasets: [{
+                        label: 'Número de Riesgos',
+                        data: Object.values(getRisksByPriority()),
+                        backgroundColor: ['#10b981', '#f59e0b', '#f97316', '#ef4444'],
+                        borderColor: ['#059669', '#d97706', '#ea580c', '#dc2626'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    plugins: {
+                        title: { display: true, text: 'Riesgos por Prioridad', color: '#fff' },
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#a0a0c0' } },
+                        y: { ticks: { color: '#a0a0c0' }, beginAtZero: true }
+                    }
+                }
+            });
+
+            // Chart 5: Distribución de Puntuaciones de Riesgo (Line)
+            new Chart(document.getElementById('chart5'), {
+                type: 'line',
+                data: {
+                    labels: risks.map((_, i) => `Riesgo ${i+1}`),
+                    datasets: [{
+                        label: 'Puntuación de Riesgo',
+                        data: getRiskScores(),
+                        backgroundColor: 'rgba(102, 126, 234, 0.2)',
+                        borderColor: '#667eea',
+                        borderWidth: 2,
+                        fill: true
+                    }]
+                },
+                options: {
+                    plugins: {
+                        title: { display: true, text: 'Distribución de Puntuaciones de Riesgo', color: '#fff' },
+                        legend: { labels: { color: '#a0a0c0' } }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#a0a0c0' } },
+                        y: { ticks: { color: '#a0a0c0' }, beginAtZero: true }
+                    }
+                }
+            });
+
+            // Chart 6: Riesgos por Probabilidad (Bar)
+            new Chart(document.getElementById('chart6'), {
+                type: 'bar',
+                data: {
+                    labels: ['1', '2', '3', '4', '5'],
+                    datasets: [{
+                        label: 'Número de Riesgos',
+                        data: getRisksByProbability(),
+                        backgroundColor: colors,
+                        borderColor: colors.map(c => c.replace('0.8', '1')),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    plugins: {
+                        title: { display: true, text: 'Riesgos por Probabilidad', color: '#fff' },
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#a0a0c0' } },
+                        y: { ticks: { color: '#a0a0c0' }, beginAtZero: true }
+                    }
+                }
+            });
+
+            // Chart 7: Riesgos por Impacto (Pie)
+            new Chart(document.getElementById('chart7'), {
+                type: 'pie',
+                data: {
+                    labels: ['1', '2', '3', '4', '5'],
+                    datasets: [{
+                        data: getRisksByImpact(),
+                        backgroundColor: colors,
+                        borderColor: colors.map(c => c.replace('0.8', '1')),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    plugins: {
+                        title: { display: true, text: 'Riesgos por Impacto', color: '#fff' },
+                        legend: { labels: { color: '#a0a0c0' } }
+                    }
+                }
+            });
+
+            // Chart 8: Riesgo Promedio por Categoría (Bar)
+            new Chart(document.getElementById('chart8'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(getAverageRiskByCategory()),
+                    datasets: [{
+                        label: 'Riesgo Promedio',
+                        data: Object.values(getAverageRiskByCategory()),
+                        backgroundColor: colors,
+                        borderColor: colors.map(c => c.replace('0.8', '1')),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    plugins: {
+                        title: { display: true, text: 'Riesgo Promedio por Categoría', color: '#fff' },
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#a0a0c0' } },
+                        y: { ticks: { color: '#a0a0c0' }, beginAtZero: true }
+                    }
+                }
+            });
+
+            // Chart 9: Riesgos Críticos por Categoría (Doughnut)
+            new Chart(document.getElementById('chart9'), {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(getCriticalRisksByCategory()),
+                    datasets: [{
+                        data: Object.values(getCriticalRisksByCategory()),
+                        backgroundColor: colors,
+                        borderColor: colors.map(c => c.replace('0.8', '1')),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    plugins: {
+                        title: { display: true, text: 'Riesgos Críticos por Categoría', color: '#fff' },
+                        legend: { labels: { color: '#a0a0c0' } }
+                    }
+                }
+            });
+        }
+
+        function updateVisualizations() {
+            updateDashboard();
+            updateRecommendations();
+            updateRiskMatrix();
+            updateHeatmap();
+            updateCharts();
+            updateRisksTable();
+        }
+
+        function closeModal() {
+            document.getElementById('riskModal').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('riskModal');
+            if (event.target == modal) closeModal();
+        }
+
+        function deleteRisk(index) {
+            if (confirm('¿Eliminar este riesgo?')) {
+                risks.splice(index, 1);
+                updateVisualizations();
+            }
+        }
+
+        window.onload = function() {
+            createParticles();
+            
+            risks.push({
+                name: "Cosecha Ahora",
+                category: "Criptografía",
+                probability: 3,
+                impact: 5,
+                solution: "Implementar crypto-agilidad y migrar a PQC inmediatamente. Doble encriptación híbrida.",
+                priority: "CRÍTICO",
+                status: "Pendiente",
+                timestamp: new Date()
+            });
+            risks.push({
+                name: "Ruptura RSA por Shor",
+                category: "Criptografía",
+                probability: 4,
+                impact: 5,
+                solution: "Adoptar algoritmos post-cuánticos como Kyber y Dilithium NIST.",
+                priority: "CRÍTICO",
+                status: "Pendiente",
+                timestamp: new Date()
+            });
+            risks.push({
+                name: "Decoherencia de Qubits",
+                category: "Hardware Cuántico",
+                probability: 5,
+                impact: 5,
+                solution: "Refrigeración criogénica + códigos superficie nivel 2.",
+                priority: "CRÍTICO",
+                status: "Pendiente",
+                timestamp: new Date()
+            });
+            risks.push({
+                name: "Ruido EMI",
+                category: "Hardware Cuántico",
+                probability: 2,
+                impact: 4,
+                solution: "Blindaje Faraday + IA predictiva EMI.",
+                priority: "ALTO",
+                status: "Pendiente",
+                timestamp: new Date()
+            });
+            risks.push({
+                name: "Error CNOT",
+                category: "Hardware Cuántico",
+                probability: 3,
+                impact: 4,
+                solution: "Calibración dinámica + códigos Steane.",
+                priority: "ALTO",
+                status: "Pendiente",
+                timestamp: new Date()
+            });
+            risks.push({
+                name: "Fuga de Bell",
+                category: "Protección de Datos",
+                probability: 4,
+                impact: 4,
+                solution: "Encriptación homomórfica + fragmentación qubits.",
+                priority: "ALTO",
+                status: "Pendiente",
+                timestamp: new Date()
+            });
+            risks.push({
+                name: "Ruptura ECDH",
+                category: "Criptografía",
+                probability: 4,
+                impact: 4,
+                solution: "NTRU Prime + rotación curvas.",
+                priority: "ALTO",
+                status: "Pendiente",
+                timestamp: new Date()
+            });
+            risks.push({
+                name: "Vulnerabilidad DSA",
+                category: "Criptografía",
+                probability: 2,
+                impact: 3,
+                solution: "FALCON/SPHINCS+. Rotación claves 90 días.",
+                priority: "MEDIO",
+                status: "Pendiente",
+                timestamp: new Date()
+            });
+            risks.push({
+                name: "Corrupción GHZ",
+                category: "Software",
+                probability: 3,
+                impact: 3,
+                solution: "Verificación multipartita + códigos CSS.",
+                priority: "MEDIO",
+                status: "Pendiente",
+                timestamp: new Date()
+            });
+            risks.push({
+                name: "PNS QKD",
+                category: "Comunicaciones",
+                probability: 4,
+                impact: 3,
+                solution: "BB84 decoy states + Device-Independent QKD.",
+                priority: "MEDIO",
+                status: "Pendiente",
+                timestamp: new Date()
+            });
+            
+            const speed = document.getElementById('autoSpeed').value * 1000;
+            updateVisualizations();
+            startAutoGeneration(speed);
+        };
+    </script>
+</body>
+</html>
